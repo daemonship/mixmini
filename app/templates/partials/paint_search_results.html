@@ -1,0 +1,10 @@
+{% for paint in paints %}
+  <div class="paint-search-result" data-paint-id="{{ paint.id }}">
+    <div class="search-swatch" style="background-color: {{ paint.hex }};"></div>
+    <div class="search-info">
+      <strong>{{ paint.name }}</strong>
+      <span class="search-brand">{{ paint.brand }} {{ paint.range }} ({{ paint.paint_type }})</span>
+    </div>
+    <button type="button" class="btn-toggle add" onclick="selectPaint({{ paint.id }}, '{{ paint.brand }} {{ paint.range }}: {{ paint.name }}')">+</button>
+  </div>
+{% endfor %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}My Recipes — MixMini{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">My Recipes</h1>
+    <a href="/recipes/new" class="btn btn-primary">New Recipe</a>
+  </div>
+
+  {% if recipe_data %}
+    <div class="recipe-grid">
+      {% for data in recipe_data %}
+        {% set recipe = data.recipe %}
+        {% set components = data.components %}
+        <div class="recipe-card">
+          <a href="/recipes/{{ recipe.id }}" class="card-link">
+            <div class="recipe-header">
+              <h3 class="recipe-name">{{ recipe.name }}</h3>
+              <span class="recipe-meta">{{ components | length }} component{{ 's' if components | length != 1 }}</span>
+            </div>
+            <div class="recipe-components">
+              {% for rc, paint in components[:4] %}
+                <div class="component-swatch" style="background-color: {{ paint.hex }};" title="{{ paint.name }} ({{ rc.ratio }})"></div>
+              {% endfor %}
+              {% if components | length > 4 %}
+                <div class="component-swatch more">+{{ components | length - 4 }}</div>
+              {% endif %}
+            </div>
+            {% if recipe.note %}
+              <div class="recipe-note">{{ recipe.note | truncate(80) }}</div>
+            {% endif %}
+          </a>
+          <div class="recipe-actions">
+            <a href="/recipes/{{ recipe.id }}/edit" class="btn-ghost small">Edit</a>
+            <form method="post" action="/recipes/{{ recipe.id }}/delete" class="inline-form">
+              <button type="submit" class="btn-remove small" onclick="return confirm('Delete this recipe?')">Delete</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📝</div>
+      <h2>No recipes yet</h2>
+      <p>Create your first paint mix recipe to get started.</p>
+      <a href="/recipes/new" class="btn btn-primary">Create Recipe</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+  .recipe-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .recipe-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-2px);
+  }
+  .card-link {
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+  }
+  .recipe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+  .recipe-name {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0;
+  }
+  .recipe-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .recipe-components {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .component-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .component-swatch.more {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .recipe-note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-top: 0.5rem;
+  }
+  .recipe-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .btn-ghost.small, .btn-remove.small {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+  }
+  .inline-form {
+    display: inline;
+  }
+</style>
+{% endblock %}

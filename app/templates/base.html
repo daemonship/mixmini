@@ -20,6 +20,7 @@
       {% if user is defined and user %}
         <a href="/catalog" {% if request.url.path == '/catalog' %}class="active"{% endif %}>Catalog</a>
         <a href="/inventory" {% if request.url.path == '/inventory' %}class="active"{% endif %}>Inventory</a>
+        <a href="/recipes" {% if request.url.path.startswith('/recipes') %}class="active"{% endif %}>Recipes</a>
         <div class="nav-sep"></div>
         <a href="#" id="logout-link">Sign out</a>
       {% else %}

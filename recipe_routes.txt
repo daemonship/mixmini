@@ -1,0 +1,237 @@
+# ---------------------------------------------------------------------------
+# Recipe routes
+# ---------------------------------------------------------------------------
+
+
+@app.get("/recipes", response_class=HTMLResponse)
+async def recipe_list(
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    recipes = db.query(Recipe).filter(Recipe.user_id == current_user.id).order_by(Recipe.name).all()
+    # For each recipe, load components and paints
+    recipe_data = []
+    for recipe in recipes:
+        components = db.query(RecipeComponent, Paint).join(Paint, RecipeComponent.paint_id == Paint.id).filter(RecipeComponent.recipe_id == recipe.id).all()
+        recipe_data.append({
+            "recipe": recipe,
+            "components": components,
+        })
+    return templates.TemplateResponse(
+        request,
+        "recipes/list.html",
+        {"user": current_user, "recipe_data": recipe_data},
+    )
+
+
+@app.get("/recipes/new", response_class=HTMLResponse)
+async def recipe_new(
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    # Get all paints for the searchable selection
+    paints = db.query(Paint).order_by(Paint.brand, Paint.range, Paint.name).all()
+    return templates.TemplateResponse(
+        request,
+        "recipes/new.html",
+        {"user": current_user, "paints": paints},
+    )
+
+
+@app.post("/recipes", response_class=HTMLResponse)
+async def recipe_create(
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    form = await request.form()
+    name = form.get("name")
+    note = form.get("note", "")
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Recipe name required")
+
+    # Parse components: paint_id and ratio pairs
+    # Expecting form fields like components[0][paint_id], components[0][ratio]
+    # Simpler: we'll accept paint_ids and ratios as lists with matching indices
+    paint_ids = form.getlist("paint_id")
+    ratios = form.getlist("ratio")
+    
+    # Validate
+    components = []
+    for paint_id_str, ratio_str in zip(paint_ids, ratios):
+        if not paint_id_str or not ratio_str:
+            continue
+        try:
+            paint_id = int(paint_id_str)
+            ratio = int(ratio_str)
+            if ratio <= 0:
+                raise ValueError("Ratio must be positive")
+            paint = db.query(Paint).filter(Paint.id == paint_id).first()
+            if not paint:
+                raise HTTPException(status_code=400, detail=f"Paint {paint_id} not found")
+            components.append((paint_id, ratio))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid paint id or ratio")
+
+    # Create recipe
+    recipe = Recipe(user_id=current_user.id, name=name, note=note)
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+
+    # Add components
+    for paint_id, ratio in components:
+        comp = RecipeComponent(recipe_id=recipe.id, paint_id=paint_id, ratio=ratio)
+        db.add(comp)
+    db.commit()
+
+    return RedirectResponse(f"/recipes/{recipe.id}", status_code=303)
+
+
+@app.get("/recipes/{recipe_id}", response_class=HTMLResponse)
+async def recipe_detail(
+    recipe_id: int,
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == current_user.id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    # Get components with paint details
+    components = db.query(RecipeComponent, Paint).join(Paint, RecipeComponent.paint_id == Paint.id).filter(RecipeComponent.recipe_id == recipe.id).all()
+
+    # Get user's paints for ownership check
+    user_paint_ids = {up.paint_id for up in db.query(UserPaint).filter(UserPaint.user_id == current_user.id).all()}
+
+    # Compute total ratio for normalization (optional)
+    total_ratio = sum(rc.ratio for rc, _ in components)
+
+    return templates.TemplateResponse(
+        request,
+        "recipes/detail.html",
+        {
+            "user": current_user,
+            "recipe": recipe,
+            "components": components,
+            "user_paint_ids": user_paint_ids,
+            "total_ratio": total_ratio,
+        },
+    )
+
+
+@app.get("/recipes/{recipe_id}/edit", response_class=HTMLResponse)
+async def recipe_edit(
+    recipe_id: int,
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == current_user.id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    # Get existing components with paint details
+    components = db.query(RecipeComponent, Paint).join(Paint, RecipeComponent.paint_id == Paint.id).filter(RecipeComponent.recipe_id == recipe.id).all()
+
+    # All paints for selection
+    paints = db.query(Paint).order_by(Paint.brand, Paint.range, Paint.name).all()
+
+    return templates.TemplateResponse(
+        request,
+        "recipes/edit.html",
+        {
+            "user": current_user,
+            "recipe": recipe,
+            "components": components,
+            "paints": paints,
+        },
+    )
+
+
+@app.post("/recipes/{recipe_id}", response_class=HTMLResponse)
+async def recipe_update(
+    recipe_id: int,
+    request: Request,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == current_user.id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    form = await request.form()
+    name = form.get("name")
+    note = form.get("note", "")
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Recipe name required")
+
+    # Parse components (same as create)
+    paint_ids = form.getlist("paint_id")
+    ratios = form.getlist("ratio")
+    components = []
+    for paint_id_str, ratio_str in zip(paint_ids, ratios):
+        if not paint_id_str or not ratio_str:
+            continue
+        try:
+            paint_id = int(paint_id_str)
+            ratio = int(ratio_str)
+            if ratio <= 0:
+                raise ValueError("Ratio must be positive")
+            paint = db.query(Paint).filter(Paint.id == paint_id).first()
+            if not paint:
+                raise HTTPException(status_code=400, detail=f"Paint {paint_id} not found")
+            components.append((paint_id, ratio))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid paint id or ratio")
+
+    # Update recipe
+    recipe.name = name
+    recipe.note = note
+    # Delete existing components
+    db.query(RecipeComponent).filter(RecipeComponent.recipe_id == recipe.id).delete()
+    # Add new components
+    for paint_id, ratio in components:
+        comp = RecipeComponent(recipe_id=recipe.id, paint_id=paint_id, ratio=ratio)
+        db.add(comp)
+    db.commit()
+
+    return RedirectResponse(f"/recipes/{recipe.id}", status_code=303)
+
+
+@app.post("/recipes/{recipe_id}/delete")
+async def recipe_delete(
+    recipe_id: int,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id, Recipe.user_id == current_user.id).first()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    db.delete(recipe)
+    db.commit()
+    return RedirectResponse("/recipes", status_code=303)
+
+
+# HTMX endpoint for paint search in recipe builder
+@app.get("/recipes/paint-search", response_class=HTMLResponse)
+async def paint_search(
+    request: Request,
+    q: Optional[str] = None,
+    current_user: User = Depends(current_active_user),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Paint).order_by(Paint.brand, Paint.range, Paint.name)
+    if q:
+        query = query.filter(Paint.name.ilike(f"%{q}%"))
+    paints = query.limit(20).all()
+    return templates.TemplateResponse(
+        request,
+        "partials/paint_search_results.html",
+        {"paints": paints},
+    )

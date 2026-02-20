@@ -17,7 +17,7 @@
 | Project scaffold & CI | ✅ Complete | FastAPI + HTMX + Jinja2, SQLite, Alembic, Dockerfile, GitHub Actions |
 | Database schema, auth & paint seed | ✅ Complete | SQLAlchemy models, FastAPI-Users cookie auth, 395-paint catalog |
 | Paint catalog browse & inventory UI | ✅ Complete | HTMX toggles, status cycling, dark workshop UI |
-| Recipe builder & recipe list | 🚧 In Progress | |
+| Recipe builder & recipe list | ✅ Complete | HTMX‑powered paint selection, dynamic component rows, ownership indicators in detail view |
 | Code review | 📋 Planned | |
 | Pre-launch verification | 📋 Planned | |
 | Deploy to production | 📋 Planned | Fly.io with persistent SQLite volume |
@@ -48,6 +48,9 @@ Once running and seeded, the full UI is available:
 | Sign in | `/login` | Log in |
 | Catalog | `/catalog` | Browse all 395 paints by brand/range with color swatches; click **+** to add to inventory |
 | Inventory | `/inventory` | Your owned paints; click the status badge to cycle **full → low → empty**; filter by status tab |
+| Recipe list | `/recipes` | Browse your saved recipes, view component swatches |
+| Recipe detail | `/recipes/{id}` | View components with ratios, ownership indicators, edit/delete |
+| New recipe | `/recipes/new` | Build a recipe with searchable paint selection and ratio inputs |
 
 HTMX powers all inventory interactions — toggling a paint or cycling its status updates the card in place without a page reload.
 

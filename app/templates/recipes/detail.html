@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.name }} — MixMini{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ recipe.name }}</h1>
+      {% if recipe.note %}
+        <p class="recipe-note">{{ recipe.note }}</p>
+      {% endif %}
+    </div>
+    <div class="header-actions">
+      <a href="/recipes/{{ recipe.id }}/edit" class="btn btn-primary">Edit Recipe</a>
+      <form method="post" action="/recipes/{{ recipe.id }}/delete" class="inline-form">
+        <button type="submit" class="btn-ghost" onclick="return confirm('Delete this recipe?')">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="recipe-detail">
+    <div class="components-section">
+      <h2 class="section-heading">Components</h2>
+      <div class="components-list">
+        {% for rc, paint in components %}
+          {% set owned = paint.id in user_paint_ids %}
+          <div class="component-row {% if owned %}owned{% else %}missing{% endif %}">
+            <div class="component-swatch" style="background-color: {{ paint.hex }};"></div>
+            <div class="component-info">
+              <div class="component-name">{{ paint.name }} <span class="component-brand">{{ paint.brand }} {{ paint.range }}</span></div>
+              <div class="component-meta">Paint type: {{ paint.paint_type }}</div>
+            </div>
+            <div class="component-ratio">
+              <span class="ratio-number">{{ rc.ratio }}</span>
+              <span class="ratio-label">part{{ 's' if rc.ratio != 1 }}</span>
+              {% if total_ratio > 0 %}
+                <span class="ratio-percent">({{ (rc.ratio * 100 / total_ratio) | round(1) }}%)</span>
+              {% endif %}
+            </div>
+            <div class="component-ownership">
+              {% if owned %}
+                <span class="owned-badge">✓ Owned</span>
+              {% else %}
+                <span class="missing-badge">✗ Not owned</span>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      {% if total_ratio > 0 %}
+        <div class="total-ratio">
+          Total parts: <strong>{{ total_ratio }}</strong>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="recipe-actions-bottom">
+      <a href="/recipes" class="btn-ghost">← Back to Recipes</a>
+      <a href="/catalog" class="btn-ghost">Browse Catalog</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .recipe-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+  }
+  .section-heading {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+  .components-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .component-row {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    transition: border-color 0.2s;
+  }
+  .component-row.owned {
+    border-color: rgba(74, 222, 128, 0.4);
+    background: rgba(74, 222, 128, 0.05);
+  }
+  .component-row.missing {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.05);
+  }
+  .component-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    margin-right: 1rem;
+  }
+  .component-info {
+    flex: 1;
+  }
+  .component-name {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+  .component-brand {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-left: 0.5rem;
+  }
+  .component-meta {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+  .component-ratio {
+    text-align: center;
+    margin-right: 1.5rem;
+  }
+  .ratio-number {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--accent);
+    display: block;
+    line-height: 1;
+  }
+  .ratio-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .ratio-percent {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+  }
+  .component-ownership {
+    min-width: 100px;
+    text-align: right;
+  }
+  .owned-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--status-full);
+    background: rgba(74, 222, 128, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+  }
+  .missing-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .total-ratio {
+    text-align: right;
+    font-size: 1rem;
+    color: var(--text-muted);
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .recipe-actions-bottom {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+  }
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  .inline-form {
+    display: inline;
+  }
+</style>
+{% endblock %}

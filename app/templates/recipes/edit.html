@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Recipe — MixMini{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Edit Recipe</h1>
+    <a href="/recipes/{{ recipe.id }}" class="btn-ghost">← Back to Recipe</a>
+  </div>
+
+  <form method="post" action="/recipes/{{ recipe.id }}" class="recipe-form">
+    <div class="form-section">
+      <h2 class="section-heading">Recipe Details</h2>
+      <div class="field">
+        <label for="name">Recipe Name *</label>
+        <input type="text" id="name" name="name" value="{{ recipe.name }}" required autofocus>
+      </div>
+      <div class="field">
+        <label for="note">Notes (optional)</label>
+        <textarea id="note" name="note" rows="3">{{ recipe.note or '' }}</textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-header">
+        <h2 class="section-heading">Components</h2>
+        <button type="button" id="add-component" class="btn btn-primary small">+ Add Component</button>
+      </div>
+      <p class="form-help">Specify paints and their relative ratios (e.g., 3 parts red, 1 part yellow).</p>
+
+      <div id="components-list">
+        {% for rc, paint in components %}
+          <div class="component-row">
+            <div class="component-paint">
+              <label>Paint</label>
+              <input list="paint-options" class="paint-search" name="paint_id" value="{{ paint.id }}" placeholder="Search paint name..." required>
+            </div>
+            <div class="component-ratio">
+              <label>Ratio</label>
+              <input type="number" name="ratio" min="1" max="999" value="{{ rc.ratio }}" required>
+            </div>
+            <div class="component-remove">
+              <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+            </div>
+          </div>
+        {% endfor %}
+        {% if components | length == 0 %}
+          <!-- Empty row if no components -->
+          <div class="component-row">
+            <div class="component-paint">
+              <label>Paint</label>
+              <input list="paint-options" class="paint-search" name="paint_id" placeholder="Search paint name..." required>
+            </div>
+            <div class="component-ratio">
+              <label>Ratio</label>
+              <input type="number" name="ratio" min="1" max="999" value="1" required>
+            </div>
+            <div class="component-remove">
+              <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <datalist id="paint-options">
+        {% for paint in paints %}
+          <option value="{{ paint.id }}">{{ paint.brand }} {{ paint.range }}: {{ paint.name }} ({{ paint.paint_type }})</option>
+        {% endfor %}
+      </datalist>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary large">Update Recipe</button>
+      <a href="/recipes/{{ recipe.id }}" class="btn-ghost">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Add component row
+  document.getElementById('add-component').addEventListener('click', () => {
+    const list = document.getElementById('components-list');
+    const row = document.createElement('div');
+    row.className = 'component-row';
+    row.innerHTML = `
+      <div class="component-paint">
+        <label>Paint</label>
+        <input list="paint-options" class="paint-search" name="paint_id" placeholder="Search paint name..." required>
+      </div>
+      <div class="component-ratio">
+        <label>Ratio</label>
+        <input type="number" name="ratio" min="1" max="999" value="1" required>
+      </div>
+      <div class="component-remove">
+        <button type="button" class="btn-remove" onclick="removeRow(this)">✕</button>
+      </div>
+    `;
+    list.appendChild(row);
+    row.querySelector('.paint-search').focus();
+  });
+
+  function removeRow(button) {
+    const row = button.closest('.component-row');
+    if (row && document.querySelectorAll('.component-row').length > 1) {
+      row.remove();
+    }
+  }
+
+  // Prevent form submission if no components
+  document.querySelector('.recipe-form').addEventListener('submit', (e) => {
+    const rows = document.querySelectorAll('.component-row');
+    if (rows.length === 0) {
+      e.preventDefault();
+      alert('Add at least one component.');
+    }
+  });
+</script>
+<style>
+  .recipe-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+  }
+  .form-section {
+    margin-bottom: 3rem;
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .section-heading {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .field {
+    margin-bottom: 1.5rem;
+  }
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+  .field input,
+  .field textarea {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.65rem 0.9rem;
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+  .field textarea {
+    resize: vertical;
+  }
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  .form-help {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  #components-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .component-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+  }
+  .component-paint,
+  .component-ratio {
+    flex: 1;
+  }
+  .component-remove {
+    margin-bottom: 0.4rem;
+  }
+  .component-paint label,
+  .component-ratio label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+  }
+  .paint-search {
+    width: 100%;
+  }
+  .btn-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.15s;
+  }
+  .btn-remove:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #f87171;
+  }
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border);
+    padding-top: 2rem;
+    margin-top: 2rem;
+  }
+  .btn-primary.large {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+</style>
+{% endblock %}
