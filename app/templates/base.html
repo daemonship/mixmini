@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}MixMini{% endblock %}</title>
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2uiQIBGWy2rvFib0p1aDP9b68+JQOtJMi4" crossorigin="anonymous"></script>
+
+  <!-- Minimal base styles -->
+  <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="brand">MixMini</a>
+    <div class="nav-links">
+      {% block nav_links %}{% endblock %}
+    </div>
+  </nav>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
