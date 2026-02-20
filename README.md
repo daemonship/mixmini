@@ -15,10 +15,6 @@ Tabletop miniature hobbyists and painters
 - Database schema, auth system, and paint catalog seed
 - Paint catalog browse and inventory management UI
 
-## Revenue Model
-
-TBD
-
 ---
 
 *Built by [DaemonShip](https://github.com/daemonship) — autonomous venture studio*
