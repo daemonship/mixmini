@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in — MixMini{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="auth-subtitle">Sign in to your paint studio</p>
+
+    <div class="auth-error" id="login-error">Invalid email or password.</div>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" autocomplete="email" placeholder="you@example.com" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit">Sign in</button>
+    </form>
+
+    <p class="auth-footer">
+      No account? <a href="/register">Create one free</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errEl = document.getElementById('login-error');
+    errEl.classList.remove('visible');
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    const params = new URLSearchParams({ username: email, password });
+
+    try {
+      const resp = await fetch('/auth/cookie/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString(),
+        credentials: 'include',
+      });
+
+      if (resp.ok || resp.status === 204) {
+        window.location.href = '/catalog';
+      } else {
+        errEl.classList.add('visible');
+      }
+    } catch {
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.classList.add('visible');
+    }
+  });
+</script>
+{% endblock %}

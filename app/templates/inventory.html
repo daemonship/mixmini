@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}My Inventory — MixMini{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">My Inventory</h1>
+    <span class="page-meta">{{ all_count }} paint{% if all_count != 1 %}s{% endif %} tracked</span>
+  </div>
+
+  {# Status filter tabs #}
+  <div class="filter-tabs">
+    <a href="/inventory"
+       class="filter-tab f-all {% if status_filter == '' %}active{% endif %}">
+      All
+      <span class="tab-count">{{ all_count }}</span>
+    </a>
+    <a href="/inventory?status=full"
+       class="filter-tab f-full {% if status_filter == 'full' %}active{% endif %}">
+      Full
+      <span class="tab-count">{{ full_count }}</span>
+    </a>
+    <a href="/inventory?status=low"
+       class="filter-tab f-low {% if status_filter == 'low' %}active{% endif %}">
+      Low
+      <span class="tab-count">{{ low_count }}</span>
+    </a>
+    <a href="/inventory?status=empty"
+       class="filter-tab f-empty {% if status_filter == 'empty' %}active{% endif %}">
+      Empty
+      <span class="tab-count">{{ empty_count }}</span>
+    </a>
+  </div>
+
+  {# Inventory content #}
+  {% if grouped %}
+    {% for brand, ranges in grouped.items() %}
+    <section class="brand-section">
+      {% set ns = namespace(brand_total=0) %}
+      {% for range_name, pairs in ranges.items() %}{% set ns.brand_total = ns.brand_total + pairs | length %}{% endfor %}
+      <h2 class="brand-heading">
+        {{ brand }}
+        <span class="brand-badge">{{ ns.brand_total }}</span>
+      </h2>
+      {% for range_name, pairs in ranges.items() %}
+      <div class="range-group">
+        <div class="range-heading">{{ range_name }}</div>
+        <div class="paint-grid">
+          {% for up, paint in pairs %}
+          <div class="paint-card owned status-{{ up.status.value }}"
+               id="inv-paint-{{ paint.id }}">
+            <div class="card-swatch" style="background-color: {{ paint.hex }};"></div>
+            <div class="card-body">
+              <span class="paint-name">{{ paint.name }}</span>
+              <span class="paint-type-badge">{{ paint.paint_type }}</span>
+              <div class="card-actions">
+                <span class="status-cycle {{ up.status.value }}"
+                      hx-post="/inventory/status/{{ paint.id }}"
+                      hx-target="#inv-paint-{{ paint.id }}"
+                      hx-swap="outerHTML"
+                      title="Click to cycle: full → low → empty"
+                      style="cursor:pointer;">
+                  <span class="status-dot"></span>{{ up.status.value }}
+                </span>
+                <button class="btn-remove"
+                        hx-post="/inventory/remove/{{ paint.id }}"
+                        hx-target="#inv-paint-{{ paint.id }}"
+                        hx-swap="outerHTML"
+                        title="Remove from inventory">✕</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🎨</div>
+      {% if status_filter %}
+        <h2>No {{ status_filter }} paints</h2>
+        <p>You don't have any paints marked as <strong>{{ status_filter }}</strong> right now.</p>
+        <a href="/inventory" class="btn btn-ghost">View all</a>
+      {% else %}
+        <h2>Your inventory is empty</h2>
+        <p>Browse the paint catalog and add the paints you own to start tracking your collection.</p>
+        <a href="/catalog" class="btn btn-primary">Browse catalog</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

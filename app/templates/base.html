@@ -8,21 +8,41 @@
   <!-- HTMX -->
   <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2uiQIBGWy2rvFib0p1aDP9b68+JQOtJMi4" crossorigin="anonymous"></script>
 
-  <!-- Minimal base styles -->
+  <!-- Styles -->
   <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}" />
+
+  {% block head %}{% endblock %}
 </head>
 <body>
   <nav class="navbar">
-    <a href="/" class="brand">MixMini</a>
+    <a href="/" class="brand">MixMini<span>paint studio</span></a>
     <div class="nav-links">
-      {% block nav_links %}{% endblock %}
+      {% if user is defined and user %}
+        <a href="/catalog" {% if request.url.path == '/catalog' %}class="active"{% endif %}>Catalog</a>
+        <a href="/inventory" {% if request.url.path == '/inventory' %}class="active"{% endif %}>Inventory</a>
+        <div class="nav-sep"></div>
+        <a href="#" id="logout-link">Sign out</a>
+      {% else %}
+        <a href="/login" {% if request.url.path == '/login' %}class="active"{% endif %}>Sign in</a>
+        <a href="/register" class="btn btn-primary" style="padding: 0.3rem 1rem; font-size: 0.82rem; margin-left: 0.25rem;">Get started</a>
+      {% endif %}
     </div>
   </nav>
 
-  <main class="container">
+  <main>
     {% block content %}{% endblock %}
   </main>
 
   {% block scripts %}{% endblock %}
+
+  {% if user is defined and user %}
+  <script>
+    document.getElementById('logout-link').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/auth/cookie/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/';
+    });
+  </script>
+  {% endif %}
 </body>
 </html>

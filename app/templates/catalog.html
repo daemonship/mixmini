@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Paint Catalog — MixMini{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Paint Catalog</h1>
+    <span class="page-meta">{{ owned_count }} / {{ total_count }} owned</span>
+  </div>
+
+  {# Search bar — client-side filter #}
+  <div class="search-bar">
+    <span class="search-icon">⌕</span>
+    <input type="search"
+           id="catalog-search"
+           placeholder="Search paints by name…"
+           value="{{ search }}"
+           autocomplete="off" />
+  </div>
+
+  {# Paint catalog — grouped by brand > range #}
+  <div id="catalog-content">
+    {% for brand, ranges in grouped.items() %}
+    <section class="brand-section" data-brand="{{ brand | lower }}">
+      {% set ns = namespace(brand_total=0) %}
+      {% for range_name, pairs in ranges.items() %}{% set ns.brand_total = ns.brand_total + pairs | length %}{% endfor %}
+      <h2 class="brand-heading">
+        {{ brand }}
+        <span class="brand-badge">{{ ns.brand_total }} paints</span>
+      </h2>
+      {% for range_name, pairs in ranges.items() %}
+      <div class="range-group" data-range="{{ range_name | lower }}">
+        <div class="range-heading">{{ range_name }}</div>
+        <div class="paint-grid">
+          {% for paint, user_paint in pairs %}
+          <div class="paint-card {% if user_paint %}owned status-{{ user_paint.status.value }}{% endif %}"
+               id="paint-{{ paint.id }}"
+               data-name="{{ paint.name | lower }}">
+            <div class="card-swatch" style="background-color: {{ paint.hex }};"></div>
+            <div class="card-body">
+              <span class="paint-name">{{ paint.name }}</span>
+              <span class="paint-type-badge">{{ paint.paint_type }}</span>
+              <div class="card-actions">
+                {% if user_paint %}
+                  <span class="status-cycle {{ user_paint.status.value }}"
+                        hx-post="/inventory/status/{{ paint.id }}"
+                        hx-target="#paint-{{ paint.id }}"
+                        hx-swap="outerHTML"
+                        title="Click to cycle status"
+                        style="cursor:pointer;">
+                    <span class="status-dot"></span>{{ user_paint.status.value }}
+                  </span>
+                  <button class="btn-toggle remove"
+                          hx-post="/catalog/toggle/{{ paint.id }}"
+                          hx-target="#paint-{{ paint.id }}"
+                          hx-swap="outerHTML"
+                          title="Remove from inventory">✕</button>
+                {% else %}
+                  <button class="btn-toggle add"
+                          hx-post="/catalog/toggle/{{ paint.id }}"
+                          hx-target="#paint-{{ paint.id }}"
+                          hx-swap="outerHTML"
+                          title="Add to inventory">+</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h2>No paints found</h2>
+      <p>Try a different search term.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const searchInput = document.getElementById('catalog-search');
+  const allCards = document.querySelectorAll('.paint-card[data-name]');
+  const allRangeGroups = document.querySelectorAll('.range-group');
+  const allBrandSections = document.querySelectorAll('.brand-section');
+
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+
+    allCards.forEach(card => {
+      const matches = !q || card.dataset.name.includes(q);
+      card.style.display = matches ? '' : 'none';
+    });
+
+    // Hide range groups that have no visible cards
+    allRangeGroups.forEach(group => {
+      const visible = group.querySelectorAll('.paint-card:not([style*="display: none"])').length;
+      group.style.display = visible > 0 ? '' : 'none';
+    });
+
+    // Hide brand sections that have no visible range groups
+    allBrandSections.forEach(section => {
+      const visible = section.querySelectorAll('.range-group:not([style*="display: none"])').length;
+      section.style.display = visible > 0 ? '' : 'none';
+    });
+  });
+
+  // Focus on load if search param present
+  if (searchInput.value) searchInput.select();
+</script>
+{% endblock %}

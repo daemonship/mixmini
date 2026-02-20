@@ -1,19 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}MixMini — Paint Inventory & Recipe Manager{% endblock %}
-
-{% block nav_links %}
-  <a href="/login">Log in</a>
-  <a href="/register">Register</a>
-{% endblock %}
+{% block title %}MixMini — Miniature Paint Inventory & Recipe Manager{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <h1>Track your paints.<br>Build your recipes.</h1>
-  <p>
-    Manage your miniature paint collection across brands, create custom mix
-    recipes, and see at a glance what you own and what you need.
-  </p>
-  <a href="/register" class="btn btn-primary">Get started</a>
-</section>
+<div class="container">
+  <section class="hero">
+    <h1>Your <em>paints</em>, perfectly<br>organized.</h1>
+    <p>Track your miniature paint collection, build mixing recipes, and know exactly what you have before you sit down to paint.</p>
+    <div class="hero-actions">
+      {% if user %}
+        <a href="/catalog" class="btn btn-primary">Browse Catalog</a>
+        <a href="/inventory" class="btn btn-ghost">My Inventory</a>
+      {% else %}
+        <a href="/register" class="btn btn-primary">Get started free</a>
+        <a href="/login" class="btn btn-ghost">Sign in</a>
+      {% endif %}
+    </div>
+    <div class="hero-features">
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3>400+ Paints</h3>
+        <p>Full Citadel and Vallejo Game Color catalogs with accurate hex swatches.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Inventory Tracking</h3>
+        <p>Mark paints as full, running low, or empty so you never run out mid-project.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧪</div>
+        <h3>Mix Recipes</h3>
+        <p>Save custom mixing ratios and see at a glance which ingredients you own.</p>
+      </div>
+    </div>
+  </section>
+</div>
 {% endblock %}

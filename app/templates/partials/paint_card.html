@@ -1,0 +1,59 @@
+{% if context == "catalog" %}
+{# ── Catalog card: shows add/remove toggle ── #}
+<div class="paint-card {% if user_paint %}owned status-{{ user_paint.status.value }}{% endif %}"
+     id="paint-{{ paint.id }}">
+  <div class="card-swatch" style="background-color: {{ paint.hex }};"></div>
+  <div class="card-body">
+    <span class="paint-name">{{ paint.name }}</span>
+    <span class="paint-type-badge">{{ paint.paint_type }}</span>
+    <div class="card-actions">
+      {% if user_paint %}
+        <span class="status-cycle {{ user_paint.status.value }}"
+              hx-post="/inventory/status/{{ paint.id }}"
+              hx-target="#paint-{{ paint.id }}"
+              hx-swap="outerHTML"
+              title="Click to cycle status"
+              style="cursor:pointer;">
+          <span class="status-dot"></span>{{ user_paint.status.value }}
+        </span>
+        <button class="btn-toggle remove"
+                hx-post="/catalog/toggle/{{ paint.id }}"
+                hx-target="#paint-{{ paint.id }}"
+                hx-swap="outerHTML"
+                title="Remove from inventory">✕</button>
+      {% else %}
+        <button class="btn-toggle add"
+                hx-post="/catalog/toggle/{{ paint.id }}"
+                hx-target="#paint-{{ paint.id }}"
+                hx-swap="outerHTML"
+                title="Add to inventory">+</button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% else %}
+{# ── Inventory card: shows status cycle + remove ── #}
+<div class="paint-card owned status-{{ user_paint.status.value }}"
+     id="inv-paint-{{ paint.id }}">
+  <div class="card-swatch" style="background-color: {{ paint.hex }};"></div>
+  <div class="card-body">
+    <span class="paint-name">{{ paint.name }}</span>
+    <span class="paint-type-badge">{{ paint.paint_type }}</span>
+    <div class="card-actions">
+      <span class="status-cycle {{ user_paint.status.value }}"
+            hx-post="/inventory/status/{{ paint.id }}"
+            hx-target="#inv-paint-{{ paint.id }}"
+            hx-swap="outerHTML"
+            title="Click to cycle: full → low → empty"
+            style="cursor:pointer;">
+        <span class="status-dot"></span>{{ user_paint.status.value }}
+      </span>
+      <button class="btn-remove"
+              hx-post="/inventory/remove/{{ paint.id }}"
+              hx-target="#inv-paint-{{ paint.id }}"
+              hx-swap="outerHTML"
+              title="Remove from inventory">✕</button>
+    </div>
+  </div>
+</div>
+{% endif %}
