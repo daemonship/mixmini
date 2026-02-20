@@ -15,8 +15,8 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Project scaffold & CI | ✅ Complete | FastAPI + HTMX + Jinja2, SQLite, Alembic, Dockerfile, GitHub Actions |
-| Database schema, auth & paint seed | 🚧 In Progress | Models, FastAPI-Users, ~400 paint catalog |
-| Paint catalog browse & inventory UI | 📋 Planned | |
+| Database schema, auth & paint seed | ✅ Complete | SQLAlchemy models, FastAPI-Users cookie auth, 395-paint catalog |
+| Paint catalog browse & inventory UI | 🚧 In Progress | |
 | Recipe builder & recipe list | 📋 Planned | |
 | Code review | 📋 Planned | |
 | Pre-launch verification | 📋 Planned | |
@@ -80,15 +80,40 @@ docker run -p 8000:8000 -v mixmini-data:/data mixmini
 ```
 mixmini/
 ├── app/
-│   ├── main.py          # FastAPI app, routes
+│   ├── main.py          # FastAPI app, routes, auth wiring
 │   ├── database.py      # SQLAlchemy engine, session, Base
-│   ├── models.py        # ORM models (expanded in Task 2)
+│   ├── models.py        # ORM models: User, Paint, UserPaint, Recipe, RecipeComponent
+│   ├── auth.py          # FastAPI-Users setup, cookie transport, JWT strategy
 │   ├── static/          # CSS, JS assets
 │   └── templates/       # Jinja2 HTML templates
 ├── alembic/             # Database migrations
+├── scripts/
+│   └── seed_paints.py   # Seeds 395 Citadel + Vallejo Game Color paints
 ├── tests/               # pytest test suite
 ├── Dockerfile
 └── pyproject.toml
+```
+
+### Seeding the paint catalog
+
+After running migrations, seed the paint database:
+
+```bash
+python scripts/seed_paints.py
+```
+
+This loads 395 paints covering Citadel (Base, Layer, Shade, Dry, Contrast, Technical) and Vallejo Game Color, Game Air, and Wash ranges — with hex color values and paint type metadata.
+
+### Data backup (Docker)
+
+Your SQLite database lives in the `/data` volume. To find and copy it out:
+
+```bash
+# Find the volume path on disk
+docker volume inspect mixmini-data
+
+# Copy the database file out for backup
+docker run --rm -v mixmini-data:/data busybox cat /data/mixmini.db > backup.db
 ```
 
 ---
