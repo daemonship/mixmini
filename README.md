@@ -16,8 +16,8 @@
 |---------|--------|-------|
 | Project scaffold & CI | ✅ Complete | FastAPI + HTMX + Jinja2, SQLite, Alembic, Dockerfile, GitHub Actions |
 | Database schema, auth & paint seed | ✅ Complete | SQLAlchemy models, FastAPI-Users cookie auth, 395-paint catalog |
-| Paint catalog browse & inventory UI | 🚧 In Progress | |
-| Recipe builder & recipe list | 📋 Planned | |
+| Paint catalog browse & inventory UI | ✅ Complete | HTMX toggles, status cycling, dark workshop UI |
+| Recipe builder & recipe list | 🚧 In Progress | |
 | Code review | 📋 Planned | |
 | Pre-launch verification | 📋 Planned | |
 | Deploy to production | 📋 Planned | Fly.io with persistent SQLite volume |
@@ -34,8 +34,22 @@ Tabletop miniature hobbyists and painters need a way to:
 - **Backend:** Python + FastAPI
 - **Frontend:** HTMX + Jinja2 templates (server-rendered, no JS framework)
 - **Database:** SQLite via SQLAlchemy + Alembic migrations
-- **Auth:** FastAPI-Users (email/password, cookie sessions) — Task 2
+- **Auth:** FastAPI-Users (email/password, cookie sessions with JWT)
 - **Deploy:** Fly.io with persistent volume for SQLite
+
+## Using the App
+
+Once running and seeded, the full UI is available:
+
+| Page | URL | Description |
+|------|-----|-------------|
+| Home | `/` | Landing page |
+| Sign up | `/register` | Create an account |
+| Sign in | `/login` | Log in |
+| Catalog | `/catalog` | Browse all 395 paints by brand/range with color swatches; click **+** to add to inventory |
+| Inventory | `/inventory` | Your owned paints; click the status badge to cycle **full → low → empty**; filter by status tab |
+
+HTMX powers all inventory interactions — toggling a paint or cycling its status updates the card in place without a page reload.
 
 ## Getting Started
 
